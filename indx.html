@@ -1,0 +1,1674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Corning® OralGlow — Interactive 3D</title>
+<style>
+:root {
+  color-scheme: light;
+  --ink: #14141f;
+  --mut: #525466;
+  --acc: #0071e3;
+  --acc-glow: rgba(0, 113, 227, 0.35);
+  --gl: rgba(255, 255, 255, 0.68);
+  --gl-strong: rgba(255, 255, 255, 0.84);
+  --bd: rgba(255, 255, 255, 0.88);
+  --sh: 0 16px 44px rgba(35, 28, 85, 0.14), 0 2px 10px rgba(0, 0, 0, 0.04), inset 0 1px 1px rgba(255, 255, 255, 0.95);
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; margin: 0; overflow: hidden; user-select: none; }
+
+body {
+  font: 13.5px/1.55 -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif;
+  color: var(--ink);
+  background: #f0f4ff;
+  position: relative;
+}
+
+/* Colorful Apple-Style Mesh Aurora Background */
+#bg-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(60% 55% at 12% 15%, rgba(255, 110, 199, 0.55) 0%, transparent 68%),
+    radial-gradient(55% 50% at 82% 12%, rgba(56, 189, 248, 0.62) 0%, transparent 70%),
+    radial-gradient(60% 60% at 24% 88%, rgba(251, 146, 60, 0.48) 0%, transparent 68%),
+    radial-gradient(65% 60% at 78% 84%, rgba(168, 85, 247, 0.55) 0%, transparent 72%),
+    radial-gradient(45% 45% at 48% 48%, rgba(99, 102, 241, 0.32) 0%, transparent 70%),
+    linear-gradient(135deg, #fdf4ff 0%, #eef2ff 45%, #e0f2fe 100%);
+  transition: filter 0.6s ease, opacity 0.6s ease;
+}
+
+body.theme-aurora #bg-canvas {
+  background:
+    radial-gradient(60% 55% at 15% 18%, rgba(236, 72, 153, 0.65) 0%, transparent 68%),
+    radial-gradient(55% 50% at 85% 15%, rgba(6, 182, 212, 0.68) 0%, transparent 70%),
+    radial-gradient(65% 60% at 25% 85%, rgba(59, 130, 246, 0.6) 0%, transparent 70%),
+    radial-gradient(60% 60% at 80% 82%, rgba(139, 92, 246, 0.68) 0%, transparent 72%),
+    radial-gradient(45% 45% at 50% 45%, rgba(16, 185, 129, 0.42) 0%, transparent 68%),
+    linear-gradient(135deg, #f5f3ff 0%, #e0e7ff 50%, #cffafe 100%);
+}
+
+body.theme-sunset #bg-canvas {
+  background:
+    radial-gradient(60% 55% at 15% 18%, rgba(251, 113, 133, 0.65) 0%, transparent 70%),
+    radial-gradient(55% 55% at 85% 18%, rgba(250, 204, 21, 0.55) 0%, transparent 70%),
+    radial-gradient(60% 60% at 22% 85%, rgba(192, 132, 252, 0.6) 0%, transparent 70%),
+    radial-gradient(60% 55% at 80% 85%, rgba(56, 189, 248, 0.58) 0%, transparent 70%),
+    linear-gradient(135deg, #fff1f2 0%, #fef3c7 48%, #e0f2fe 100%);
+}
+
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(55px);
+  opacity: 0.65;
+  animation: floatOrb 18s ease-in-out infinite alternate;
+}
+.orb.o1 { width: 42vw; height: 42vw; left: -6vw; top: -8vw; background: radial-gradient(circle, #ff7eb3, #ff758c 60%, transparent); }
+.orb.o2 { width: 38vw; height: 38vw; right: 18vw; top: -6vw; background: radial-gradient(circle, #38bdf8, #818cf8 65%, transparent); animation-delay: -5s; }
+.orb.o3 { width: 40vw; height: 40vw; left: 16vw; bottom: -12vw; background: radial-gradient(circle, #c084fc, #60a5fa 65%, transparent); animation-delay: -11s; }
+.orb.o4 { width: 30vw; height: 30vw; left: 36vw; top: 24vh; background: radial-gradient(circle, #fbbf24, #f472b6 65%, transparent); opacity: 0.42; animation-delay: -8s; }
+
+@keyframes floatOrb {
+  0%   { transform: translate3d(0, 0, 0) scale(1); }
+  50%  { transform: translate3d(35px, -25px, 0) scale(1.08); }
+  100% { transform: translate3d(-25px, 30px, 0) scale(0.95); }
+}
+
+/* Apple Glassmorphism */
+.g {
+  background: var(--gl);
+  -webkit-backdrop-filter: blur(30px) saturate(200%);
+  backdrop-filter: blur(30px) saturate(200%);
+  border: 1px solid var(--bd);
+  box-shadow: var(--sh);
+  border-radius: 24px;
+}
+
+#st {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  right: 416px;
+  z-index: 1;
+  overflow: hidden;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+}
+canvas:active { cursor: grabbing; }
+
+/* Header Pill with Apple Icon */
+#ttl {
+  position: absolute;
+  z-index: 3;
+  left: 20px;
+  top: calc(18px + env(safe-area-inset-top, 0px));
+  padding: 11px 18px 11px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+#ttl:hover { transform: translateY(-1px); }
+
+.apple-badge {
+  width: 40px;
+  height: 40px;
+  border-radius: 13px;
+  background: linear-gradient(135deg, #1d1d1f 0%, #3a3a3c 100%);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18), inset 0 1px 1px rgba(255, 255, 255, 0.3);
+  flex-shrink: 0;
+}
+.apple-badge svg { width: 21px; height: 21px; fill: currentColor; }
+
+.ttl-text h1 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.ttl-badge {
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 99px;
+  background: linear-gradient(135deg, #0071e3, #7c3aed);
+  color: #fff;
+  letter-spacing: 0.01em;
+}
+.ttl-text p {
+  margin: 1px 0 0;
+  color: var(--mut);
+  font-size: 11.5px;
+  font-weight: 500;
+}
+
+/* Top-Right Theme & Status Bar */
+#top-tools {
+  position: absolute;
+  z-index: 3;
+  right: 20px;
+  top: calc(18px + env(safe-area-inset-top, 0px));
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.ibtn {
+  border: 1px solid var(--bd);
+  background: var(--gl);
+  -webkit-backdrop-filter: blur(24px) saturate(190%);
+  backdrop-filter: blur(24px) saturate(190%);
+  box-shadow: var(--sh);
+  padding: 8px 13px;
+  border-radius: 99px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.ibtn:hover {
+  transform: translateY(-1.5px);
+  background: var(--gl-strong);
+}
+.ibtn svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+.swatch-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: conic-gradient(#ff6ec7, #38bdf8, #a855f7, #fb923c, #ff6ec7);
+  box-shadow: 0 0 0 1.5px #fff;
+}
+
+/* Interactive Hint Pill */
+#hint {
+  position: absolute;
+  z-index: 2;
+  left: 20px;
+  bottom: 76px;
+  padding: 6px 13px;
+  border-radius: 99px;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--mut);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  pointer-events: none;
+  opacity: 0.9;
+}
+#hint svg { width: 14px; height: 14px; color: var(--acc); }
+
+/* Bottom Apple Control Dock */
+#bar {
+  position: absolute;
+  z-index: 3;
+  left: 20px;
+  right: 20px;
+  bottom: 18px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.b {
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  padding: 9px 15px;
+  border-radius: 99px;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.b svg {
+  width: 15px;
+  height: 15px;
+  stroke-width: 2;
+  transition: transform 0.25s ease;
+}
+.b:hover {
+  transform: translateY(-2px);
+  background: var(--gl-strong);
+  box-shadow: 0 12px 28px rgba(35, 28, 85, 0.18), inset 0 1px 1px #fff;
+}
+.b:active { transform: translateY(0) scale(0.97); }
+
+.b.on, .n.on {
+  background: linear-gradient(135deg, #0071e3 0%, #5e5ce6 100%);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.35);
+  box-shadow: 0 10px 25px rgba(0, 113, 227, 0.38), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+}
+.b:focus-visible, .n:focus-visible {
+  outline: 2px solid var(--acc);
+  outline-offset: 2px;
+}
+
+/* Right Side Panel */
+#pn {
+  position: fixed;
+  right: 14px;
+  top: calc(14px + env(safe-area-inset-top, 0px));
+  bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+  width: 392px;
+  z-index: 3;
+  overflow-y: auto;
+  padding: 20px;
+  scrollbar-width: thin;
+}
+#pn::-webkit-scrollbar { width: 5px; }
+#pn::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.15); border-radius: 99px; }
+
+.pn-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.pn-top span {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--mut);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.pn-top span svg { width: 13px; height: 13px; color: var(--acc); }
+
+#sl {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+.n {
+  height: 38px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.72);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+.n:hover:not(.on) {
+  transform: translateY(-2px);
+  background: #fff;
+}
+
+/* Step Card Details */
+#dt {
+  margin-top: 14px;
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.92);
+  box-shadow: 0 4px 18px rgba(30, 40, 90, 0.06);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.dt-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.dt-ico {
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  flex-shrink: 0;
+  box-shadow: 0 6px 14px rgba(0, 113, 227, 0.25);
+}
+.dt-ico svg { width: 19px; height: 19px; }
+
+#dt small {
+  display: block;
+  color: var(--acc);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+#dt h2 {
+  font-size: 18.5px;
+  line-height: 1.25;
+  margin: 1px 0 0;
+  letter-spacing: -0.02em;
+}
+#dt p {
+  margin: 8px 0 12px;
+  color: #323444;
+  font-size: 13px;
+  line-height: 1.58;
+}
+
+.tg {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0 5px 5px 0;
+  padding: 4px 10px;
+  border-radius: 99px;
+  background: linear-gradient(135deg, rgba(0, 113, 227, 0.11), rgba(124, 58, 237, 0.11));
+  border: 1px solid rgba(0, 113, 227, 0.16);
+  color: #0051a8;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+/* Spec Grid with Apple SF Icons */
+#sp {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 14px;
+}
+.sc {
+  padding: 11px 12px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.68);
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+.sc:hover {
+  transform: translateY(-1.5px);
+  background: rgba(255, 255, 255, 0.9);
+}
+.sc-ic {
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.sc-ic svg { width: 15px; height: 15px; }
+.sc b {
+  display: block;
+  font-size: 15.5px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.sc span {
+  font-size: 11px;
+  color: var(--mut);
+  line-height: 1.3;
+  display: block;
+  margin-top: 1px;
+}
+
+/* Why Corning List */
+#pn h3 {
+  font-size: 14px;
+  font-weight: 700;
+  margin: 18px 0 8px;
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+#pn h3 svg { width: 16px; height: 16px; color: var(--acc); }
+
+.why-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.why-list li {
+  padding: 9px 11px;
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  font-size: 12.2px;
+  color: #323444;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+.why-list li svg {
+  width: 15px;
+  height: 15px;
+  color: #10b981;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.ft {
+  font-size: 11px;
+  color: var(--mut);
+  margin: 14px 0 2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Floating 3D Callout Pins */
+.pin {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 2;
+  pointer-events: auto;
+  cursor: pointer;
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  display: none;
+  will-change: transform;
+}
+.pin i {
+  position: absolute;
+  left: -5px;
+  top: -5px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0071e3, #7c3aed);
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.25);
+  transition: transform 0.2s ease;
+}
+.pin:hover i { transform: scale(1.3); }
+.pin span {
+  position: absolute;
+  left: 12px;
+  padding: 4px 11px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.92);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  color: var(--ink);
+  box-shadow: 0 4px 14px rgba(20, 25, 60, 0.14);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.2s ease;
+}
+.pin:hover span {
+  background: var(--acc);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+@media (max-width: 820px) {
+  #st { right: 0; bottom: 46%; }
+  #pn {
+    left: 10px;
+    right: 10px;
+    width: auto;
+    top: auto;
+    height: calc(46% - 10px);
+    bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+  }
+  .ttl-text p, #hint { display: none; }
+  #ttl { padding: 8px 13px; left: 12px; top: 12px; }
+  #top-tools { right: 12px; top: 12px; }
+  #bar { bottom: 10px; left: 12px; right: 12px; gap: 6px; }
+  .b { padding: 7px 11px; font-size: 11.5px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Colorful Animated Apple Mesh Background -->
+<div id="bg-canvas">
+  <div class="orb o1"></div>
+  <div class="orb o2"></div>
+  <div class="orb o3"></div>
+  <div class="orb o4"></div>
+</div>
+
+<!-- 3D Interactive Stage -->
+<div id="st">
+  <div id="ttl" class="g">
+    <div class="apple-badge" title="Apple Health / OralAI™ Ecosystem">
+      <svg viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.33c.64-.78 1.08-1.86.96-2.94-.93.04-2.06.62-2.72 1.4-.58.68-1.1 1.79-.96 2.84 1.04.08 2.08-.52 2.72-1.3"/></svg>
+    </div>
+    <div class="ttl-text">
+      <h1>Corning® OralGlow <span class="ttl-badge">OralAI™ 3D</span></h1>
+      <p>Smart Oral Biochemical Analyzer · Team Aegis</p>
+    </div>
+  </div>
+
+  <div id="top-tools">
+    <button class="ibtn" id="b-theme" title="Switch Background Theme">
+      <i class="swatch-dot"></i>
+      <span id="theme-lbl">Apple Mesh</span>
+    </button>
+  </div>
+
+  <div id="hint" class="g">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+    <span>Click 3D components or select steps 1–7 · Drag to rotate</span>
+  </div>
+
+  <!-- Apple-Style Control Bar with SF Symbols -->
+  <div id="bar">
+    <button class="g b" id="bx">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+      <span>X-Ray</span>
+    </button>
+    <button class="g b" id="be">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 12 12 17 22 12"/><polyline points="2 17 12 22 22 17"/></svg>
+      <span>Explode</span>
+    </button>
+    <button class="g b" id="bc">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3L12 3Z"/><path d="M5 3v4"/><path d="M3 5h4"/></svg>
+      <span>UV Case</span>
+    </button>
+    <button class="g b" id="bl">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"/><path d="M7 7h.01"/></svg>
+      <span>Labels</span>
+    </button>
+    <button class="g b" id="bp">
+      <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"/></svg>
+      <span>Auto Tour</span>
+    </button>
+    <button class="g b" id="br" aria-label="Reset View" title="Reset View">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- Right Interactive Inspector Panel -->
+<aside id="pn" class="g">
+  <div class="pn-top">
+    <span>
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.33c.64-.78 1.08-1.86.96-2.94-.93.04-2.06.62-2.72 1.4-.58.68-1.1 1.79-.96 2.84 1.04.08 2.08-.52 2.72-1.3"/></svg>
+      Workflow &amp; Architecture
+    </span>
+    <span id="step-counter">3D Overview</span>
+  </div>
+  <div id="sl"></div>
+  <div id="dt"></div>
+  <div id="sp"></div>
+
+  <h3>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    Why Corning® Specialty Glass
+  </h3>
+  <ul class="why-list">
+    <li>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      <span>Distortion-free optical window (&gt;92% transmittance), <i>zero autofluorescence</i>, &amp; 10<sup>7</sup> &Omega; electrical insulation for a high signal-to-noise ratio.</span>
+    </li>
+    <li>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      <span>ISO 10993 biocompatible (<i>zero leaching</i>); withstands &gt;500 N bite force, 85°C heat, and repeated 275 nm UV-C sterilization.</span>
+    </li>
+    <li>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      <span>Recyclable circular glass cartridge supporting Taiwan OSHA Article 6 compliance &amp; GRI 403 ESG reporting.</span>
+    </li>
+  </ul>
+  <p class="ft">Interactive visualization for the 2026 Corning Future Innovator proposal · Team Aegis.</p>
+</aside>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(() => {
+  const $ = s => document.querySelector(s);
+  const st = $('#st');
+  const PI = Math.PI;
+
+  let R;
+  try {
+    R = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+  } catch (e) {
+    st.insertAdjacentHTML('beforeend', '<p style="padding:90px 24px">WebGL is not available on this device.</p>');
+    return;
+  }
+
+  R.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  R.outputEncoding = THREE.sRGBEncoding;
+  R.toneMapping = THREE.ACESFilmicToneMapping;
+  R.toneMappingExposure = 1.12;
+  R.shadowMap.enabled = true;
+  R.shadowMap.type = THREE.PCFSoftShadowMap;
+  st.insertBefore(R.domElement, st.firstChild);
+
+  const scene = new THREE.Scene();
+  const cam = new THREE.PerspectiveCamera(34, 1, 0.1, 100);
+  const V = new THREE.Vector3();
+
+  /* --- Colorful Studio Environment Reflection Map --- */
+  const pm = new THREE.PMREMGenerator(R);
+  const es = new THREE.Scene();
+  es.background = new THREE.Color(0xf2f4ff);
+  const envPanels = [
+    [0, 9, 0, 14, 0.2, 14, 0xffffff, 3.8],
+    [-8, 4, 4, 0.2, 7, 8, 0xd8b4fe, 2.6],
+    [8, 4, -3, 0.2, 7, 8, 0x7dd3fc, 2.8],
+    [0, 4, 9, 12, 6, 0.2, 0xfbcfe8, 2.2],
+    [0, -5, 0, 14, 0.2, 14, 0xe0e7ff, 1.4]
+  ];
+  envPanels.forEach(a => {
+    const c = new THREE.Color(a[6]).multiplyScalar(a[7]);
+    const m = new THREE.Mesh(
+      new THREE.BoxGeometry(a[3], a[4], a[5]),
+      new THREE.MeshBasicMaterial({ color: c })
+    );
+    m.position.set(a[0], a[1], a[2]);
+    es.add(m);
+  });
+  scene.environment = pm.fromScene(es, 0.04).texture;
+
+  /* --- Studio Lighting --- */
+  scene.add(new THREE.HemisphereLight(0xffffff, 0xd8dff2, 0.72));
+
+  const dl = new THREE.DirectionalLight(0xffffff, 1.25);
+  dl.position.set(4.5, 8.5, 6.2);
+  dl.castShadow = true;
+  dl.shadow.mapSize.set(2048, 2048);
+  const sh = dl.shadow.camera;
+  sh.left = sh.bottom = -6.5;
+  sh.right = sh.top = 6.5;
+  sh.near = 1;
+  sh.far = 22;
+  dl.shadow.radius = 5;
+  dl.shadow.bias = -0.0004;
+  scene.add(dl);
+
+  const rimLight1 = new THREE.DirectionalLight(0xa855f7, 0.48);
+  rimLight1.position.set(-6, 3, -5);
+  scene.add(rimLight1);
+
+  const rimLight2 = new THREE.DirectionalLight(0x38bdf8, 0.45);
+  rimLight2.position.set(5, 2, -6);
+  scene.add(rimLight2);
+
+  /* Soft Shadow Catcher Ground */
+  const gr = new THREE.Mesh(
+    new THREE.PlaneGeometry(40, 40),
+    new THREE.ShadowMaterial({ opacity: 0.14 })
+  );
+  gr.rotation.x = -PI / 2;
+  gr.position.y = -0.02;
+  gr.receiveShadow = true;
+  scene.add(gr);
+
+  /* --- Helper Glow Texture Generator --- */
+  function makeGlowTex(hexStr) {
+    const c = document.createElement('canvas');
+    c.width = c.height = 128;
+    const x = c.getContext('2d');
+    const g = x.createRadialGradient(64, 64, 2, 64, 64, 62);
+    g.addColorStop(0, '#ffffff');
+    g.addColorStop(0.28, hexStr);
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    x.fillStyle = g;
+    x.fillRect(0, 0, 128, 128);
+    return new THREE.CanvasTexture(c);
+  }
+  const blueGlowTex = makeGlowTex('rgba(56,189,248,0.85)');
+  const redGlowTex = makeGlowTex('rgba(255,75,92,0.85)');
+  const uvGlowTex = makeGlowTex('rgba(147,83,255,0.75)');
+
+  /* --- Materials (PBR Apple Industrial Finish) --- */
+  const M = o => new THREE.MeshPhysicalMaterial(o);
+  const S0 = o => new THREE.MeshStandardMaterial(o);
+
+  const whiteBodyMat = M({
+    color: 0xf8f9fc,
+    roughness: 0.24,
+    metalness: 0.02,
+    clearcoat: 0.85,
+    clearcoatRoughness: 0.14,
+    transparent: true,
+    opacity: 1
+  });
+
+  const whiteCaseMat = M({
+    color: 0xf7f8fc,
+    roughness: 0.22,
+    clearcoat: 0.9,
+    clearcoatRoughness: 0.12
+  });
+
+  const brushedSilver = M({
+    color: 0xd8dce3,
+    metalness: 0.92,
+    roughness: 0.22,
+    clearcoat: 0.35,
+    envMapIntensity: 1.35
+  });
+
+  const buttonMetal = M({
+    color: 0xb8bec9,
+    metalness: 0.85,
+    roughness: 0.28,
+    clearcoat: 0.4
+  });
+
+  const corningGlass = M({
+    color: 0xf4faff,
+    roughness: 0.03,
+    metalness: 0.0,
+    transparent: true,
+    opacity: 0.26,
+    side: THREE.DoubleSide,
+    depthWrite: false,
+    clearcoat: 1.0,
+    clearcoatRoughness: 0.02,
+    reflectivity: 0.98,
+    envMapIntensity: 1.85
+  });
+
+  const glassInnerTube = M({
+    color: 0xdcf2ff,
+    roughness: 0.05,
+    transparent: true,
+    opacity: 0.36,
+    depthWrite: false,
+    clearcoat: 1.0
+  });
+
+  const darkSilicon = M({ color: 0x0f172a, roughness: 0.18, metalness: 0.75, clearcoat: 0.8 });
+  const goldMat = M({ color: 0xfbbf24, metalness: 0.98, roughness: 0.2 });
+  const copperMat = M({ color: 0xd97742, metalness: 0.92, roughness: 0.26 });
+  const pcbMat = M({ color: 0x115e59, roughness: 0.38, metalness: 0.25, clearcoat: 0.4 });
+  const uvTrayMat = M({
+    color: 0x6b5b95,
+    metalness: 0.78,
+    roughness: 0.25,
+    clearcoat: 0.65,
+    emissive: 0x4c1d95,
+    emissiveIntensity: 0.38
+  });
+
+  /* --- Geometry Helpers --- */
+  const CY = (rTop, rBot, len, seg = 64) => {
+    const g = new THREE.CylinderGeometry(rTop, rBot, len, seg);
+    g.rotateZ(-PI / 2);
+    return g;
+  };
+  const BX = (a, b, c) => new THREE.BoxGeometry(a, b, c);
+
+  function pillShape(w, h, r) {
+    const s = new THREE.Shape(), x = -w / 2, y = -h / 2;
+    s.moveTo(x + r, y);
+    s.lineTo(x + w - r, y);
+    s.quadraticCurveTo(x + w, y, x + w, y + r);
+    s.lineTo(x + w, y + h - r);
+    s.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    s.lineTo(x + r, y + h);
+    s.quadraticCurveTo(x, y + h, x, y + h - r);
+    s.lineTo(x, y + r);
+    s.quadraticCurveTo(x, y, x + r, y);
+    return s;
+  }
+
+  /* =========================================================
+     BUILD CORNING® ORALGLOW PEN (Matching Reference Image)
+     ========================================================= */
+  const pen = new THREE.Group();
+  const P = {};
+  const interactiveMeshes = [];
+
+  const grp = (k, x, ex = 0, ey = 0, stepIdx = 0) => {
+    const g = new THREE.Group();
+    g.position.set(x, 0, 0);
+    g.userData = { key: k, b: x, ex, ey, stepIdx };
+    pen.add(g);
+    return (P[k] = g);
+  };
+
+  const add = (g, geo, mat, x = 0, y = 0, z = 0) => {
+    const m = new THREE.Mesh(geo, mat);
+    m.position.set(x, y, z);
+    m.userData.partKey = g.userData.key;
+    m.userData.stepIdx = g.userData.stepIdx;
+    interactiveMeshes.push(m);
+    g.add(m);
+    return m;
+  };
+
+  /* 1. White Handle Housing + Recessed Pill Button + Corning® OralGlow Print */
+  let g = grp('hand', 0, 0, 0, 4);
+  // Main sleek cylindrical handle
+  add(g, CY(0.228, 0.222, 3.3, 64), whiteBodyMat, 0, 0, 0);
+
+  // Pill-shaped button bezel & brushed metallic button on top (near collar, matching photo)
+  const btnBezelGeo = new THREE.ExtrudeGeometry(pillShape(0.46, 0.165, 0.08), {
+    depth: 0.025,
+    bevelEnabled: true,
+    bevelThickness: 0.008,
+    bevelSize: 0.008,
+    bevelSegments: 4
+  });
+  btnBezelGeo.rotateX(-PI / 2);
+  add(g, btnBezelGeo, brushedSilver, 1.05, 0.215, 0);
+
+  const btnCapGeo = new THREE.ExtrudeGeometry(pillShape(0.41, 0.135, 0.065), {
+    depth: 0.032,
+    bevelEnabled: true,
+    bevelThickness: 0.01,
+    bevelSize: 0.008,
+    bevelSegments: 4
+  });
+  btnCapGeo.rotateX(-PI / 2);
+  add(g, btnCapGeo, buttonMetal, 1.05, 0.22, 0);
+
+  // Crisp "Corning® OralGlow" curved label on handle side
+  const lc = document.createElement('canvas');
+  lc.width = 1024;
+  lc.height = 128;
+  const lx = lc.getContext('2d');
+  lx.font = '600 54px -apple-system, BlinkMacSystemFont, "SF Pro Display", Helvetica, Arial';
+  lx.fillStyle = '#7c808b';
+  lx.textBaseline = 'middle';
+  lx.fillText('Corning® OralGlow', 24, 66);
+  const lt = new THREE.CanvasTexture(lc);
+  lt.encoding = THREE.sRGBEncoding;
+  lt.anisotropy = 4;
+
+  // Curved label cylinder patch hugging the handle
+  const lblGeo = new THREE.CylinderGeometry(0.2265, 0.224, 1.32, 32, 1, true, -0.32, 0.64);
+  lblGeo.rotateZ(-PI / 2);
+  lblGeo.rotateX(PI / 2);
+  const lblMat = new THREE.MeshBasicMaterial({ map: lt, transparent: true, depthWrite: false });
+  add(g, lblGeo, lblMat, -0.68, 0, 0);
+
+  /* 2. Tapered Satin Metallic Collar Band + Optical Pink/Blue Seam Ring */
+  g = grp('band', 1.78, 0.55, 0, 0);
+  // Tapered frustum collar matching photo (wider at handle 0.228, tapering to glass 0.196)
+  add(g, CY(0.196, 0.228, 0.27, 64), brushedSilver, 0, 0, 0);
+  // Subtle translucent pink/violet optical ring at the glass-collar interface (seen in photo)
+  const seamRingGeo = new THREE.TorusGeometry(0.194, 0.011, 20, 64);
+  seamRingGeo.rotateY(PI / 2);
+  const seamRingMat = new THREE.MeshBasicMaterial({
+    color: 0xf472b6,
+    transparent: true,
+    opacity: 0.65
+  });
+  add(g, seamRingGeo, seamRingMat, 0.135, 0, 0);
+
+  /* 3. Corning® Bite-Safe Specialty Glass Outer Shell */
+  g = grp('shell', 2.66, 1.65, 0, 0);
+  // Outer thick-walled glass cylinder
+  add(g, CY(0.194, 0.194, 1.5, 64), corningGlass, 0, 0, 0);
+  // Inner lumen wall for authentic thick-glass optical refraction look
+  add(g, CY(0.162, 0.162, 1.46, 48), glassInnerTube, -0.02, 0, 0);
+  // Rounded hemispherical glass dome tip
+  const capGeo = new THREE.SphereGeometry(0.194, 64, 32, 0, PI * 2, 0, PI / 2);
+  capGeo.rotateZ(-PI / 2);
+  add(g, capGeo, corningGlass, 0.75, 0, 0);
+  const innerCapGeo = new THREE.SphereGeometry(0.162, 48, 24, 0, PI * 2, 0, PI / 2);
+  innerCapGeo.rotateZ(-PI / 2);
+  add(g, innerCapGeo, glassInnerTube, 0.71, 0, 0);
+
+  /* 4. Dual Optoelectronic Biosensor Chip (Square IC + Wirebonds + Carrier) */
+  g = grp('chip', 2.38, 0.85, 0.85, 2);
+  // White ceramic/glass microfluidic carrier sled
+  add(g, BX(0.58, 0.028, 0.22), M({ color: 0xeef2f6, roughness: 0.3 }), 0, -0.012, 0);
+  // Dark silicon PCB substrate
+  add(g, BX(0.36, 0.025, 0.185), M({ color: 0x1e293b, roughness: 0.35, metalness: 0.4 }), 0.02, 0.008, 0);
+  // Main Square Optical Biosensor Die (matching dark square IC with silver/gold frame in photo)
+  add(g, BX(0.18, 0.032, 0.14), darkSilicon, 0.02, 0.024, 0);
+  add(g, BX(0.11, 0.036, 0.09), M({ color: 0x0284c7, metalness: 0.8, roughness: 0.15 }), 0.02, 0.026, 0);
+  // Gold micro-pins around the sensor chip
+  for (let i = 0; i < 6; i++) {
+    add(g, BX(0.018, 0.015, 0.028), goldMat, -0.08 + i * 0.038, 0.02, 0.082);
+    add(g, BX(0.018, 0.015, 0.028), goldMat, -0.08 + i * 0.038, 0.02, -0.082);
+  }
+
+  /* 5. Internal Thermal Sensor Array */
+  g = grp('therm', 2.12, 0.5, 0.85, 3);
+  add(g, BX(0.15, 0.022, 0.17), darkSilicon, 0, -0.01, 0);
+  [-0.055, -0.018, 0.018, 0.055].forEach(z => {
+    add(g, BX(0.095, 0.026, 0.022), copperMat, 0, 0.008, z);
+  });
+
+  /* 6. Blue & Red Micro-LED Assay Illuminators (With Volumetric Glow Sprites) */
+  g = grp('led', 1.98, 0.22, 0.85, 2);
+  const bl = new THREE.PointLight(0x38bdf8, 0.7, 1.6);
+  const rl = new THREE.PointLight(0xff4d5e, 0.7, 1.6);
+  add(g, BX(0.065, 0.04, 0.065), new THREE.MeshBasicMaterial({ color: 0x38bdf8 }), 0, 0.01, -0.065);
+  add(g, BX(0.065, 0.04, 0.065), new THREE.MeshBasicMaterial({ color: 0xff4d5e }), 0, 0.01, 0.065);
+
+  const bSprite = new THREE.Sprite(new THREE.SpriteMaterial({
+    map: blueGlowTex,
+    color: 0x38bdf8,
+    transparent: true,
+    opacity: 0.75,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+  }));
+  bSprite.scale.set(0.42, 0.42, 1);
+  bSprite.position.set(0.04, 0.02, -0.07);
+  g.add(bSprite);
+
+  const rSprite = new THREE.Sprite(new THREE.SpriteMaterial({
+    map: redGlowTex,
+    color: 0xff4d5e,
+    transparent: true,
+    opacity: 0.75,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+  }));
+  rSprite.scale.set(0.42, 0.42, 1);
+  rSprite.position.set(0.04, 0.02, 0.07);
+  g.add(rSprite);
+
+  bl.position.set(0.05, 0.04, -0.07);
+  rl.position.set(0.05, 0.04, 0.07);
+  g.add(bl, rl);
+
+  /* 7. Microfluidic Capillary Intake Channels (Twin Glass Capillary Tubes + Droplets) */
+  g = grp('chan', 2.98, 1.18, 0.85, 1);
+  const cm = S0({
+    color: 0xbae6fd,
+    emissive: 0x0284c7,
+    emissiveIntensity: 0.45,
+    transparent: true,
+    opacity: 0.82,
+    roughness: 0.1
+  });
+  add(g, CY(0.022, 0.022, 0.96, 24), cm, 0, 0.015, -0.052);
+  add(g, CY(0.022, 0.022, 0.96, 24), cm, 0, 0.015, 0.052);
+  // U-bend connector into the biosensor chip
+  add(g, BX(0.04, 0.028, 0.13), cm, -0.47, 0.015, 0);
+
+  const dr = [];
+  for (let i = 0; i < 12; i++) {
+    const m = add(
+      g,
+      new THREE.SphereGeometry(0.025, 16, 12),
+      new THREE.MeshBasicMaterial({ color: i % 2 ? 0x38bdf8 : 0x60a5fa }),
+      0,
+      0.015,
+      i % 2 ? 0.052 : -0.052
+    );
+    m.visible = false;
+    dr.push(m);
+  }
+
+  /* 8. OralAI™ On-Device Processor PCB (Inside Handle) */
+  g = grp('pcb', 0.72, 0.1, -0.82, 4);
+  add(g, BX(1.36, 0.032, 0.24), pcbMat, 0, 0, 0);
+  // OralAI Neural Edge MCU
+  add(g, BX(0.28, 0.042, 0.18), S0({ color: 0x090d16, emissive: 0x0ea5e9, emissiveIntensity: 0.4, roughness: 0.2 }), 0.24, 0.032, 0);
+  for (let i = 0; i < 7; i++) {
+    add(g, BX(0.048, 0.026, 0.038), goldMat, -0.48 + i * 0.1, 0.028, i % 2 ? 0.068 : -0.068);
+  }
+
+  /* 9. BLE 5.3 Antenna + Animated Signal Rings */
+  g = grp('ant', -0.24, -0.15, -0.82, 5);
+  for (let i = 0; i < 5; i++) add(g, BX(0.018, 0.024, 0.17), goldMat, -0.1 + i * 0.05, 0, 0);
+  for (let i = 0; i < 4; i++) add(g, BX(0.05, 0.024, 0.018), goldMat, -0.075 + i * 0.05, 0, i % 2 ? -0.08 : 0.08);
+  const rg = [0, 1, 2].map(() => {
+    const m = new THREE.Mesh(
+      new THREE.RingGeometry(0.11, 0.135, 64),
+      new THREE.MeshBasicMaterial({
+        color: 0x0071e3,
+        transparent: true,
+        opacity: 0,
+        side: THREE.DoubleSide,
+        depthWrite: false
+      })
+    );
+    m.rotation.x = -PI / 2;
+    m.position.y = 0.28;
+    m.visible = false;
+    g.add(m);
+    return m;
+  });
+
+  /* 10. Rechargeable Li-Ion Battery (Lower Handle) */
+  g = grp('batt', -0.96, -0.5, -0.82, 5);
+  add(g, CY(0.138, 0.138, 1.04, 48), S0({ color: 0x94a3b8, metalness: 0.88, roughness: 0.24 }), 0, 0, 0);
+  add(g, CY(0.141, 0.141, 0.56, 48), S0({ color: 0x10b981, emissive: 0x10b981, emissiveIntensity: 0.22, roughness: 0.3 }), 0.08, 0, 0);
+
+  /* 11. Rear Metallic Cap + Removable Charging Plug (Matching Photo Right End) */
+  g = grp('plug', -1.72, -0.88, 0, 6);
+  // Rounded satin silver rear end-cap ring
+  add(g, CY(0.222, 0.195, 0.16, 64), brushedSilver, 0, 0, 0);
+  // White flat removable charging plug tongue
+  add(g, BX(0.42, 0.042, 0.165), whiteCaseMat, -0.24, 0, 0);
+  // Gold contact pad at tip of charging plug (seen in photo)
+  add(g, BX(0.11, 0.046, 0.115), goldMat, -0.38, 0, 0);
+
+  pen.position.set(-0.75, 0.68, 1.55);
+  scene.add(pen);
+
+  /* =========================================================
+     BUILD UV-C SANITIZING & WIRELESS CHARGING CASE
+     ========================================================= */
+  const cse = new THREE.Group();
+  cse.position.set(0.35, 0, -0.45);
+  scene.add(cse);
+
+  const ringShape = () => {
+    const s = pillShape(6.1, 1.24, 0.58);
+    s.holes.push(pillShape(5.68, 0.84, 0.38));
+    return s;
+  };
+  const extrudeCase = (s, d, b = 0.025) =>
+    new THREE.ExtrudeGeometry(s, {
+      depth: d,
+      bevelEnabled: true,
+      bevelThickness: b,
+      bevelSize: b,
+      bevelSegments: 5,
+      curveSegments: 28
+    });
+
+  const addCaseMesh = (geo, m, x, y, z, parent) => {
+    const o = new THREE.Mesh(geo, m);
+    o.rotation.x = -PI / 2;
+    o.position.set(x, y, z);
+    parent.add(o);
+    return o;
+  };
+
+  // Bottom white base foot + brushed silver main case body
+  addCaseMesh(extrudeCase(pillShape(5.96, 1.14, 0.54), 0.06, 0.02), whiteCaseMat, 0, 0.01, 0, cse);
+  addCaseMesh(extrudeCase(pillShape(6.1, 1.24, 0.58), 0.12, 0.025), brushedSilver, 0, 0.06, 0, cse);
+  addCaseMesh(extrudeCase(ringShape(), 0.28, 0.02), brushedSilver, 0, 0.16, 0, cse);
+
+  // Violet metallic sculpted inner cradle tray inside lower base
+  addCaseMesh(extrudeCase(pillShape(5.72, 0.88, 0.4), 0.08, 0.015), uvTrayMat, 0, 0.12, 0, cse);
+  // Sculpted dark violet pen wells (left & right deeper pockets + center trough, matching photo)
+  const wellMat = M({ color: 0x312e81, metalness: 0.7, roughness: 0.25, emissive: 0x5b21b6, emissiveIntensity: 0.45 });
+  const wL = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.28, 0.18, 32), wellMat);
+  wL.position.set(-2.25, 0.2, 0);
+  cse.add(wL);
+  const wR = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.28, 0.18, 32), wellMat);
+  wR.position.set(2.25, 0.2, 0);
+  cse.add(wR);
+  const trough = new THREE.Mesh(CY(0.22, 0.22, 4.4, 32), wellMat);
+  trough.position.set(0, 0.21, 0);
+  trough.scale.set(1, 0.55, 1);
+  cse.add(trough);
+
+  // Hinged Upper Lid (Silver inner frame + White outer shell + Violet inner cavity)
+  const lid = new THREE.Group();
+  lid.position.set(0, 0.46, -0.62);
+  cse.add(lid);
+
+  addCaseMesh(extrudeCase(ringShape(), 0.07, 0.018), brushedSilver, 0, 0, 0.62, lid);
+  addCaseMesh(extrudeCase(ringShape(), 0.28, 0.025), whiteCaseMat, 0, 0.06, 0.62, lid);
+  addCaseMesh(extrudeCase(pillShape(6.1, 1.24, 0.58), 0.09, 0.03), whiteCaseMat, 0, 0.32, 0.62, lid);
+
+  // Inner violet UV reflector cavity inside the lid
+  const lidCavity = addCaseMesh(extrudeCase(pillShape(5.66, 0.82, 0.38), 0.05, 0.01), uvTrayMat, 0, 0.28, 0.62, lid);
+
+  // Glowing 275nm UV-C LED strips & halo inside the case
+  const uvm = new THREE.MeshBasicMaterial({
+    color: 0xa78bfa,
+    transparent: true,
+    opacity: 0.72,
+    toneMapped: false,
+    side: THREE.DoubleSide,
+    depthWrite: false
+  });
+  const f1 = new THREE.Mesh(new THREE.PlaneGeometry(5.1, 0.48), uvm);
+  f1.rotation.x = -PI / 2;
+  f1.position.y = 0.215;
+  cse.add(f1);
+
+  const f2 = new THREE.Mesh(new THREE.PlaneGeometry(5.1, 0.48), uvm);
+  f2.rotation.x = PI / 2;
+  f2.position.set(0, 0.265, 0.62);
+  lid.add(f2);
+
+  const uvSprite = new THREE.Sprite(new THREE.SpriteMaterial({
+    map: uvGlowTex,
+    color: 0x8b5cf6,
+    transparent: true,
+    opacity: 0.55,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+  }));
+  uvSprite.scale.set(4.8, 1.6, 1);
+  uvSprite.position.set(0, 0.42, 0);
+  cse.add(uvSprite);
+
+  const uvl = new THREE.PointLight(0x8b5cf6, 1.35, 5.5);
+  uvl.position.set(0, 0.55, 0.1);
+  cse.add(uvl);
+
+  // Front Black Glass Pill Display ("UV Sanitizing" with animated dashed spinner)
+  const c2 = document.createElement('canvas');
+  c2.width = 512;
+  c2.height = 112;
+  const x2 = c2.getContext('2d');
+  const t2 = new THREE.CanvasTexture(c2);
+  t2.encoding = THREE.sRGBEncoding;
+
+  function drawCaseScreen(angle) {
+    x2.clearRect(0, 0, 512, 112);
+    // Pill background
+    x2.fillStyle = '#0c0d14';
+    x2.beginPath();
+    x2.roundRect ? x2.roundRect(4, 4, 504, 104, 32) : x2.fillRect(4, 4, 504, 104);
+    x2.fill();
+    x2.strokeStyle = 'rgba(255,255,255,0.16)';
+    x2.lineWidth = 2;
+    x2.stroke();
+
+    // Animated UV-C dashed spinner
+    x2.save();
+    x2.translate(106, 56);
+    x2.rotate(angle);
+    x2.strokeStyle = '#a78bfa';
+    x2.setLineDash([5, 6]);
+    x2.lineWidth = 4.5;
+    x2.beginPath();
+    x2.arc(0, 0, 22, 0, PI * 2);
+    x2.stroke();
+    x2.restore();
+
+    // Text
+    x2.fillStyle = '#f8fafc';
+    x2.font = '500 37px -apple-system, BlinkMacSystemFont, "SF Pro Display", Helvetica, Arial';
+    x2.textBaseline = 'middle';
+    x2.fillText('UV Sanitizing', 148, 58);
+    t2.needsUpdate = true;
+  }
+  drawCaseScreen(0);
+
+  const scr = new THREE.Mesh(
+    new THREE.PlaneGeometry(1.18, 0.25),
+    new THREE.MeshBasicMaterial({ map: t2, transparent: true })
+  );
+  scr.position.set(0, 0.24, 0.652);
+  cse.add(scr);
+
+  scene.traverse(o => {
+    if (o.isMesh && o.material !== corningGlass && o.material !== glassInnerTube && o.material !== uvm && o !== gr) {
+      o.castShadow = true;
+    }
+  });
+  cse.traverse(o => {
+    if (o.isMesh) o.receiveShadow = true;
+  });
+
+  /* =========================================================
+     CONTENT DATA & APPLE SF SYMBOLS ICONS
+     ========================================================= */
+  const S = [
+    {
+      t: 'Saliva Sample Collection',
+      k: ['shell', 'band'],
+      l: 2.6,
+      o: [1.3, 0.85, 2.7],
+      col: 'linear-gradient(135deg,#0071e3,#38bdf8)',
+      ic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>',
+      g: ['Non-Invasive', 'Bite-Safe >500 N', 'ISO 10993'],
+      d: 'After brushing your teeth, the glass tip is placed under the tongue (sublingual) for about 1 minute. The Corning® specialty glass outer shell is bite-safe and biocompatible (zero leaching), while a flexible polymer coating ensures mucosal comfort—completely needle-free and painless.'
+    },
+    {
+      t: 'Microfluidic Capillary Flow',
+      k: ['chan'],
+      l: 2.95,
+      o: [0.8, 1.15, 2.35],
+      col: 'linear-gradient(135deg,#0284c7,#06b6d4)',
+      ic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/></svg>',
+      g: ['Capillary Action', 'Dynamic Compensation', 'pH 5.5–7.5'],
+      d: 'Saliva is drawn automatically by capillary action through twin micro-channels on the glass substrate without mechanical pumps. The Dynamic Compensation algorithm corrects for saliva volume and pH variations (pH 5.5–7.5) before optical readout.'
+    },
+    {
+      t: 'Dual Optoelectronic Assay',
+      k: ['led', 'chip'],
+      l: 2.2,
+      o: [0.95, 1.15, 2.5],
+      col: 'linear-gradient(135deg,#ec4899,#8b5cf6)',
+      ic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>',
+      g: ['450/560/850 nm SPR', '>92% Transmittance', 'Dual Biosensor'],
+      d: 'Blue and red micro-LEDs illuminate the sample on the integrated dual optoelectronic biosensor chip. The multi-LED SPR array detects cortisol, lactate, hs-CRP, and glucose trends through a distortion-free glass window with >92% transmittance and zero autofluorescence.'
+    },
+    {
+      t: 'Internal Thermal Sensor Array',
+      k: ['therm'],
+      l: 2.05,
+      o: [0.85, 1.05, 2.25],
+      col: 'linear-gradient(135deg,#f97316,#eab308)',
+      ic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/></svg>',
+      g: ['Sublingual Core Temp', 'Biochemical + Physical'],
+      d: 'An internal thermal sensor array measures sublingual basal body temperature simultaneously with the biochemical assay—combining internal biochemical and physical metrics in one reading free from skin-tone bias or motion artifacts.'
+    },
+    {
+      t: 'On-Device OralAI™ Processor',
+      k: ['pcb'],
+      l: 0.7,
+      o: [0, 1.8, 2.9],
+      x: 1,
+      col: 'linear-gradient(135deg,#10b981,#059669)',
+      ic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="16" x="4" y="4" rx="2"/><rect width="6" height="6" x="9" y="9" rx="1"/><path d="M15 2v2"/><path d="M15 20v2"/><path d="M2 15h2"/><path d="M2 9h2"/><path d="M20 15h2"/><path d="M20 9h2"/><path d="M9 2v2"/><path d="M9 20v2"/></svg>',
+      g: ['Kalman Filtering', 'Convolutional Filtering', '1-Min Breathing'],
+      d: 'The Edge MCU inside the handle runs real-time Kalman and convolutional filtering to eliminate food residue and pH noise. During the 1-minute optical reading window, users follow a guided breathing break to decompress and reduce stress.'
+    },
+    {
+      t: 'BLE 5.3 Sync & Cloud AI',
+      k: ['ant', 'batt'],
+      l: -0.4,
+      o: [0, 2.15, 3.3],
+      x: 1,
+      col: 'linear-gradient(135deg,#3b82f6,#6366f1)',
+      ic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 7 10 10-5 5V2l5 5L7 17"/></svg>',
+      g: ['Encrypted BLE 5.3', 'Transformer AI', 'Privacy n ≥ 10'],
+      d: 'Clean bio-data streams via encrypted BLE 5.3 to the smartphone app, where time-series Transformer models analyze daily cortisol rhythm slopes. Employees retain 100% personal data privacy, while HR only views anonymized group trends (n ≥ 10).'
+    },
+    {
+      t: 'UV-C Sanitization & Charging',
+      k: ['plug'],
+      c: 1,
+      o: [2.2, 3.0, 4.9],
+      col: 'linear-gradient(135deg,#8b5cf6,#6d28d9)',
+      ic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>',
+      g: ['275 nm UV-C · 99.9%', 'Qi Wireless', '85°C Heat Resistant'],
+      d: 'When docked into the case, 275 nm UV-C light sterilizes 99.9% of surface pathogens while recharging via Qi wireless charging or the removable rear charging plug.'
+    }
+  ];
+
+  const INTRO = `
+    <div class="dt-head">
+      <div class="dt-ico" style="background:linear-gradient(135deg,#1d1d1f,#434349)">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.33c.64-.78 1.08-1.86.96-2.94-.93.04-2.06.62-2.72 1.4-.58.68-1.1 1.79-.96 2.84 1.04.08 2.08-.52 2.72-1.3"/></svg>
+      </div>
+      <div>
+        <small>Product Overview</small>
+        <h2>Pen-Sized Oral Biochemical Analyzer</h2>
+      </div>
+    </div>
+    <p>Corning® OralGlow measures stress (cortisol), inflammation (hs-CRP), and metabolic biomarkers directly from saliva without needles in a 1-minute morning ritual. Select steps <b>1–7</b> above or click any 3D part to explore the technology.</p>
+    <span class="tg">Non-Invasive Saliva</span>
+    <span class="tg">Corning® Glass</span>
+    <span class="tg">OralAI™ Edge</span>
+    <span class="tg">275 nm UV-C Case</span>
+  `;
+
+  const specs = [
+    ['>92%', 'Glass optical transmittance', '#0071e3', '<circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18"/>'],
+    ['>500 N', 'Bite force durability', '#10b981', '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>'],
+    ['85°C', 'Sanitization heat resistance', '#f97316', '<path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/>'],
+    ['275 nm', 'UV-C, 99.9% sterilization', '#8b5cf6', '<path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3L12 3Z"/>'],
+    ['BLE 5.3', 'Encrypted mobile sync', '#3b82f6', '<path d="m7 7 10 10-5 5V2l5 5L7 17"/>'],
+    ['r = 0.80', 'Serum cortisol correlation', '#ec4899', '<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>'],
+    ['≈ 1 min', 'Daily morning ritual', '#06b6d4', '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>'],
+    ['n ≥ 10', 'Anonymized ESG group limit', '#6366f1', '<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>']
+  ];
+
+  $('#sp').innerHTML = specs.map(([v, l, c, svg]) => `
+    <div class="sc">
+      <div class="sc-ic" style="background:${c}18;color:${c}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${svg}</svg>
+      </div>
+      <div><b>${v}</b><span>${l}</span></div>
+    </div>
+  `).join('');
+
+  /* Floating 3D Callout Pins */
+  const PN = [
+    ['hand', 'White Handle + Control Button', 4],
+    ['band', 'Metallic Band & Polymer Coating', 0],
+    ['shell', 'Bite-Safe Corning® Glass Shell', 0],
+    ['chan', 'Microfluidic Capillary Channels', 1],
+    ['chip', 'Dual Optoelectronic Biosensor Chip', 2],
+    ['therm', 'Internal Thermal Sensor Array', 3],
+    ['led', 'Blue & Red Micro-LED Illuminators', 2],
+    ['pcb', 'OralAI™ On-Device Processor', 4],
+    ['ant', 'BLE 5.3 Antenna', 5],
+    ['batt', 'Rechargeable Li-Ion Battery', 5],
+    ['plug', 'Removable Charging Plug', 6]
+  ].map(([k, l, stepIdx], i) => {
+    const e = document.createElement('div');
+    e.className = 'pin';
+    e.innerHTML = `<i></i><span style="top:${(i % 3 - 1) * 22 - 11}px">${l}</span>`;
+    e.onclick = ev => {
+      ev.stopPropagation();
+      stop();
+      go(stepIdx);
+    };
+    st.appendChild(e);
+    return { k, e, x: 0, y: 0, init: false };
+  });
+
+  /* =========================================================
+     INTERACTION, CAMERA & SMOOTH DAMPING LOOP
+     ========================================================= */
+  const T = { xr: 0, ex: 0, cs: 0, lab: 0 };
+  const C = { xr: 0, ex: 0, cs: 0 };
+  let W = 1, H = 1, cur = -1, view = null, play = 0;
+
+  const ctl = new THREE.OrbitControls(cam, R.domElement);
+  ctl.enableDamping = true;
+  ctl.dampingFactor = 0.055;
+  ctl.rotateSpeed = 0.75;
+  ctl.zoomSpeed = 0.9;
+  ctl.minDistance = 2.2;
+  ctl.maxDistance = 16;
+  ctl.maxPolarAngle = PI * 0.485;
+  ctl.addEventListener('start', () => { view = null; });
+
+  const K = () => (W / H < 1 ? 1.5 : 1);
+  const HOME = () => ({
+    p: new THREE.Vector3(-1.8, 2.75, 7.6).multiplyScalar(K()),
+    t: new THREE.Vector3(0.05, 0.52, 0.45)
+  });
+  const EXP = () => ({
+    p: new THREE.Vector3(1.8, 3.1, 9.4).multiplyScalar(K()),
+    t: new THREE.Vector3(0.75, 0.5, 0.8)
+  });
+
+  function fit() {
+    W = st.clientWidth;
+    H = st.clientHeight;
+    R.setSize(W, H);
+    cam.aspect = W / H;
+    cam.fov = W / H < 1 ? 52 : 34;
+    cam.updateProjectionMatrix();
+  }
+  window.addEventListener('resize', fit);
+  fit();
+  {
+    const h = HOME();
+    cam.position.copy(h.p);
+    ctl.target.copy(h.t);
+  }
+
+  $('#sl').innerHTML = S.map((s, i) => `<button class="n" title="${s.t}">${i + 1}</button>`).join('');
+
+  const stop = () => {
+    if (play) {
+      clearInterval(play);
+      play = 0;
+    }
+  };
+
+  function ui() {
+    document.querySelectorAll('.n').forEach((b, i) => b.classList.toggle('on', i === cur));
+    [['bx', T.xr], ['be', T.ex], ['bc', T.cs], ['bl', T.lab], ['bp', play]].forEach(([id, v]) =>
+      $('#' + id).classList.toggle('on', !!v)
+    );
+    $('#step-counter').textContent = cur >= 0 ? `Step ${cur + 1} / 7` : '3D Overview';
+
+    const s = S[cur];
+    $('#dt').innerHTML = s
+      ? `<div class="dt-head">
+           <div class="dt-ico" style="background:${s.col}">${s.ic}</div>
+           <div>
+             <small>Step ${cur + 1} of 7</small>
+             <h2>${s.t}</h2>
+           </div>
+         </div>
+         <p>${s.d}</p>
+         ${s.g.map(x => `<span class="tg">${x}</span>`).join('')}`
+      : INTRO;
+  }
+
+  function go(i) {
+    cur = i;
+    const s = S[i];
+    T.xr = s.x | 0;
+    T.cs = s.c | 0;
+    T.ex = 0;
+    const t = s.c
+      ? new THREE.Vector3(0.35, 0.42, -0.45)
+      : new THREE.Vector3(s.l - 0.75, 0.68, 1.55);
+    view = {
+      t,
+      p: t.clone().add(new THREE.Vector3(...s.o).multiplyScalar(K()))
+    };
+    ui();
+  }
+
+  function home() {
+    cur = -1;
+    T.xr = T.ex = T.cs = 0;
+    view = HOME();
+    ui();
+  }
+
+  document.querySelectorAll('.n').forEach((b, i) => {
+    b.onclick = () => {
+      stop();
+      go(i);
+    };
+  });
+
+  const on = (id, f) => {
+    $('#' + id).onclick = () => {
+      f();
+      ui();
+    };
+  };
+
+  on('bx', () => { T.xr ^= 1; });
+  on('be', () => {
+    stop();
+    T.ex ^= 1;
+    T.xr = T.ex;
+    T.cs = 0;
+    cur = -1;
+    view = T.ex ? EXP() : HOME();
+  });
+  on('bc', () => {
+    stop();
+    T.cs ? home() : go(6);
+  });
+  on('bl', () => { T.lab ^= 1; });
+  on('bp', () => {
+    if (play) stop();
+    else {
+      go(0);
+      play = setInterval(() => go((cur + 1) % 7), 6200);
+    }
+  });
+  on('br', () => {
+    stop();
+    home();
+  });
+
+  /* Colorful Background Theme Switcher */
+  const themes = [
+    { cls: '', lbl: 'Apple Mesh' },
+    { cls: 'theme-aurora', lbl: 'Cyber Aurora' },
+    { cls: 'theme-sunset', lbl: 'Iridescent Glow' }
+  ];
+  let themeIdx = 0;
+  $('#b-theme').onclick = () => {
+    themeIdx = (themeIdx + 1) % themes.length;
+    document.body.className = themes[themeIdx].cls;
+    $('#theme-lbl').textContent = themes[themeIdx].lbl;
+  };
+
+  /* Direct 3D Raycast Click on Pen Parts */
+  const raycaster = new THREE.Raycaster();
+  const mouse = new THREE.Vector2();
+  let downPos = { x: 0, y: 0 };
+
+  R.domElement.addEventListener('pointerdown', e => {
+    downPos = { x: e.clientX, y: e.clientY };
+  });
+
+  R.domElement.addEventListener('pointerup', e => {
+    if (Math.hypot(e.clientX - downPos.x, e.clientY - downPos.y) > 5) return;
+    const rect = R.domElement.getBoundingClientRect();
+    mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+    mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+    raycaster.setFromCamera(mouse, cam);
+    const hits = raycaster.intersectObjects(interactiveMeshes, false);
+    if (hits.length > 0) {
+      const stIdx = hits[0].object.userData.stepIdx;
+      if (typeof stIdx === 'number') {
+        stop();
+        go(stIdx);
+      }
+    }
+  });
+
+  ui();
+
+  /* --- Frame-Rate Independent Smooth Animation Loop --- */
+  const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+  const ease = x => x * x * (3 - 2 * x);
+  const damp = (curVal, tgtVal, lambda, dt) => THREE.MathUtils.lerp(curVal, tgtVal, 1 - Math.exp(-lambda * dt));
+
+  const OUT = { x: -0.75, y: 0.68, z: 1.55 };
+  const IN = { x: 0.15, y: 0.36, z: -0.45 };
+  let lastMs = performance.now();
+
+  function tick(ms) {
+    requestAnimationFrame(tick);
+    const dt = Math.min((ms - lastMs) / 1000, 0.1);
+    lastMs = ms;
+    const t = ms / 1000;
+
+    // Frame-rate independent smooth state transitions
+    for (const k in C) {
+      C[k] = damp(C[k], T[k], 5.5, dt);
+    }
+
+    if (view) {
+      const f = 1 - Math.exp(-4.5 * dt);
+      cam.position.lerp(view.p, f);
+      ctl.target.lerp(view.t, f);
+    }
+
+    whiteBodyMat.opacity = 1 - 0.84 * C.xr;
+    whiteBodyMat.depthWrite = C.xr < 0.15;
+
+    const hl = cur >= 0 ? S[cur].k : [];
+    for (const k in P) {
+      const q = P[k], u = q.userData;
+      q.position.set(u.b + u.ex * C.ex, u.ey * C.ex, 0);
+      const tgtScale = hl.includes(k) ? 1 + 0.055 * Math.sin(t * 5.2) : 1;
+      q.scale.setScalar(damp(q.scale.x, tgtScale, 12, dt));
+    }
+
+    // Smooth parabolic arc docking into the UV Sanitizing Case
+    const p1 = ease(clamp(C.cs * 1.65));
+    const l1 = ease(clamp(C.cs * 2 - 1));
+    const arcLift = Math.sin(p1 * PI) * 0.65;
+    const idleFloat = C.cs < 0.02 ? Math.sin(t * 1.6) * 0.028 : 0;
+
+    pen.position.x = OUT.x + (IN.x - OUT.x) * p1;
+    pen.position.y = OUT.y + (IN.y - OUT.y) * p1 + arcLift + idleFloat;
+    pen.position.z = OUT.z + (IN.z - OUT.z) * p1;
+    pen.rotation.z = C.cs < 0.02 ? Math.sin(t * 0.9) * 0.012 : 0;
+
+    // Case lid opening angle & UV-C glow animation
+    lid.rotation.x = -1.88 * (1 - l1 * 0.72);
+    const uvPulse = 0.82 + 0.18 * Math.sin(t * 4.5);
+    uvm.opacity = (0.55 + 0.38 * p1) * uvPulse;
+    uvSprite.material.opacity = (0.38 + 0.42 * p1) * uvPulse;
+    uvl.intensity = (0.85 + 1.5 * p1) * uvPulse;
+
+    drawCaseScreen(t * (C.cs > 0.3 ? 3.2 : 1.1));
+
+    // Saliva capillary microfluidics animation
+    const fl = cur === 0 || cur === 1;
+    dr.forEach((m, i) => {
+      m.visible = fl;
+      if (fl) {
+        const prog = (t * 0.42 + i / dr.length) % 1;
+        m.position.x = 0.46 - prog * 0.92;
+      }
+    });
+
+    // Dual Blue & Red Micro-LED assay pulsing
+    const assayPulseB = cur === 2 ? 1.1 * Math.max(0, Math.sin(t * 5.5)) : 0.15 * Math.sin(t * 2.2);
+    const assayPulseR = cur === 2 ? 1.1 * Math.max(0, Math.cos(t * 5.5)) : 0.15 * Math.cos(t * 2.2);
+    bl.intensity = 0.55 + assayPulseB;
+    rl.intensity = 0.55 + assayPulseR;
+    bSprite.material.opacity = clamp(0.65 + assayPulseB * 0.35, 0.3, 1);
+    rSprite.material.opacity = clamp(0.65 + assayPulseR * 0.35, 0.3, 1);
+
+    // BLE 5.3 wave propagation rings
+    rg.forEach((m, i) => {
+      const s = (t * 0.48 + i / 3) % 1;
+      m.visible = cur === 5;
+      m.scale.setScalar(1 + s * 6.5);
+      m.material.opacity = (1 - s) * 0.82;
+    });
+
+    // Smoothly interpolated 2D screen-space pin tracking
+    PN.forEach(pin => {
+      const { k, e } = pin;
+      if (!(T.lab || (cur >= 0 && S[cur].k.includes(k)))) {
+        e.style.display = 'none';
+        pin.init = false;
+        return;
+      }
+      P[k].getWorldPosition(V).project(cam);
+      if (V.z > 1) {
+        e.style.display = 'none';
+        return;
+      }
+      const tx = ((V.x + 1) / 2) * W;
+      const ty = ((1 - V.y) / 2) * H;
+      if (!pin.init) {
+        pin.x = tx;
+        pin.y = ty;
+        pin.init = true;
+      } else {
+        pin.x = damp(pin.x, tx, 18, dt);
+        pin.y = damp(pin.y, ty, 18, dt);
+      }
+      e.style.display = 'block';
+      e.style.transform = `translate3d(${pin.x.toFixed(1)}px,${pin.y.toFixed(1)}px,0)`;
+    });
+
+    ctl.update();
+    R.render(scene, cam);
+  }
+
+  requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>
